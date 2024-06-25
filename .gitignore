@@ -22,4 +22,3 @@ debug
 
 mikrotik-exporter
 test-config.yml
-version.go

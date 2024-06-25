@@ -1,4 +1,5 @@
-//go:generate sh -c "printf 'package main\nconst appVersion = \"%s\"' $VERSION > version.go"
+// Run `go generate` to update the version string.
+//go:generate sh -c "printf 'package main\n\nconst appVersion = \"%s\"\n' $VERSION > version.go"
 
 package main
 
