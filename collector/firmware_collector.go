@@ -8,7 +8,6 @@ import (
 )
 
 type firmwareCollector struct {
-	props       []string
 	description *prometheus.Desc
 }
 

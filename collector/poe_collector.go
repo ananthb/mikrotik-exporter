@@ -57,7 +57,10 @@ func (c *poeCollector) collect(ctx *collectorContext) error {
 	return c.collectPOEMetricsForInterfaces(ifaces, ctx)
 }
 
-func (c *poeCollector) collectPOEMetricsForInterfaces(ifaces []string, ctx *collectorContext) error {
+func (c *poeCollector) collectPOEMetricsForInterfaces(
+	ifaces []string,
+	ctx *collectorContext,
+) error {
 	reply, err := ctx.client.Run("/interface/ethernet/poe/monitor",
 		"=numbers="+strings.Join(ifaces, ","),
 		"=once=",
@@ -82,7 +85,11 @@ func (c *poeCollector) collectPOEMetricsForInterfaces(ifaces []string, ctx *coll
 	return nil
 }
 
-func (c *poeCollector) collectMetricsForInterface(name string, se *proto.Sentence, ctx *collectorContext) {
+func (c *poeCollector) collectMetricsForInterface(
+	name string,
+	se *proto.Sentence,
+	ctx *collectorContext,
+) {
 	for _, prop := range c.props {
 		v, ok := se.Map[prop]
 		if !ok {
@@ -104,10 +111,6 @@ func (c *poeCollector) collectMetricsForInterface(name string, se *proto.Sentenc
 
 		ctx.ch <- prometheus.MustNewConstMetric(c.descForKey(prop), prometheus.GaugeValue, value, ctx.device.Name, ctx.device.Address, name)
 	}
-}
-
-func (c *poeCollector) valueForKey(name, value string) (float64, error) {
-	return strconv.ParseFloat(value, 64)
 }
 
 func (c *poeCollector) descForKey(name string) *prometheus.Desc {

@@ -7,14 +7,13 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"mikrotik-exporter/config"
 	"net"
 	"os"
 	"strconv"
 	"strings"
 	"sync"
 	"time"
-
-	"mikrotik-exporter/config"
 
 	"github.com/miekg/dns"
 	"github.com/prometheus/client_golang/prometheus"
@@ -263,7 +262,6 @@ func (c *collector) Collect(ch chan<- prometheus.Metric) {
 			dnsMsg.RecursionDesired = true
 			dnsMsg.SetQuestion(dns.Fqdn(dev.Srv.Record), dns.TypeSRV)
 			r, _, err := dnsCli.Exchange(dnsMsg, dnsServer)
-
 			if err != nil {
 				os.Exit(1)
 			}
@@ -415,11 +413,13 @@ func (c *collector) connect(d *config.Device) (*routeros.Client, error) {
 	// Login method pre-6.43 two stages, challenge
 	b, err := hex.DecodeString(ret)
 	if err != nil {
-		return nil, fmt.Errorf("RouterOS: /login: invalid ret (challenge) hex string received: %s", err)
+		return nil, fmt.Errorf(
+			"RouterOS: /login: invalid ret (challenge) hex string received: %s",
+			err,
+		)
 	}
 
-	r, err = client.Run("/login", "=name="+d.User, "=response="+challengeResponse(b, d.Password))
-	if err != nil {
+	if _, err = client.Run("/login", "=name="+d.User, "=response="+challengeResponse(b, d.Password)); err != nil {
 		return nil, err
 	}
 	log.WithField("device", d.Name).Debug("done wth login")
