@@ -1,3 +1,5 @@
+//go:generate sh -c "printf 'package main\nconst appVersion = \"%s\"' $VERSION > version.go"
+
 package main
 
 import (
@@ -8,6 +10,7 @@ import (
 	"mikrotik-exporter/config"
 	"net/http"
 	"os"
+	"runtime/debug"
 
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/collectors"
@@ -63,11 +66,18 @@ var (
 
 	cfg *config.Config
 
-	appVersion = "DEVELOPMENT"
-	shortSha   = "0xDEADBEEF"
+	vcsRevision = "0xDEADBEEF"
 )
 
 func init() {
+	bi, ok := debug.ReadBuildInfo()
+	if ok {
+		for _, s := range bi.Settings {
+			if s.Key == "vcs.revision" {
+				vcsRevision = s.Value
+			}
+		}
+	}
 	prometheus.MustRegister(version.NewCollector("mikrotik_exporter"))
 }
 
@@ -75,7 +85,7 @@ func main() {
 	flag.Parse()
 
 	if *ver {
-		fmt.Printf("\nVersion:   %s\nShort SHA: %s\n\n", appVersion, shortSha)
+		fmt.Printf("Version: %s\nSHA: %s\n", appVersion, vcsRevision)
 		os.Exit(0)
 	}
 

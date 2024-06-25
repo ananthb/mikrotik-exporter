@@ -31,6 +31,7 @@ jobs:
           TAGS: ${{ github.ref_name }},${{ github.sha }},latest
         shell: bash
         run: |
+          go generate -x ./...
           ./build.sh "$VERSION"
           export KO_DOCKER_REPO="ghcr.io/${GITHUB_REPOSITORY}"
           ko build --bare --platform=all --tags=$TAGS .
