@@ -3,38 +3,43 @@ package main
 import (
 	"bytes"
 	"flag"
-	"io/ioutil"
-	"os"
-
-	"github.com/prometheus/common/version"
-
 	"fmt"
-	"net/http"
-
 	"mikrotik-exporter/collector"
 	"mikrotik-exporter/config"
+	"net/http"
+	"os"
 
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/collectors"
+	"github.com/prometheus/client_golang/prometheus/collectors/version"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	log "github.com/sirupsen/logrus"
 )
 
 // single device can be defined via CLI flags, multiple via config file.
 var (
-	address     = flag.String("address", "", "address of the device to monitor")
-	configFile  = flag.String("config-file", "", "config file to load")
-	device      = flag.String("device", "", "single device to monitor")
-	insecure    = flag.Bool("insecure", false, "skips verification of server certificate when using TLS (not recommended)")
+	address    = flag.String("address", "", "address of the device to monitor")
+	configFile = flag.String("config-file", "", "config file to load")
+	device     = flag.String("device", "", "single device to monitor")
+	insecure   = flag.Bool(
+		"insecure",
+		false,
+		"skips verification of server certificate when using TLS (not recommended)",
+	)
 	logFormat   = flag.String("log-format", "json", "logformat text or json (default json)")
 	logLevel    = flag.String("log-level", "info", "log level")
 	metricsPath = flag.String("path", "/metrics", "path to answer requests on")
 	password    = flag.String("password", "", "password for authentication for single device")
 	deviceport  = flag.String("deviceport", "8728", "port for single device")
 	port        = flag.String("port", ":9436", "port number to listen on")
-	timeout     = flag.Duration("timeout", collector.DefaultTimeout, "timeout when connecting to devices")
-	tls         = flag.Bool("tls", false, "use tls to connect to routers")
-	user        = flag.String("user", "", "user for authentication with single device")
-	ver         = flag.Bool("version", false, "find the version of binary")
+	timeout     = flag.Duration(
+		"timeout",
+		collector.DefaultTimeout,
+		"timeout when connecting to devices",
+	)
+	tls  = flag.Bool("tls", false, "use tls to connect to routers")
+	user = flag.String("user", "", "user for authentication with single device")
+	ver  = flag.Bool("version", false, "find the version of binary")
 
 	withBgp       = flag.Bool("with-bgp", false, "retrieves BGP routing infrormation")
 	withConntrack = flag.Bool("with-conntrack", false, "retrieves connection tracking metrics")
@@ -110,7 +115,7 @@ func loadConfig() (*config.Config, error) {
 }
 
 func loadConfigFromFile() (*config.Config, error) {
-	b, err := ioutil.ReadFile(*configFile)
+	b, err := os.ReadFile(*configFile)
 	if err != nil {
 		return nil, err
 	}
@@ -132,7 +137,7 @@ func loadConfigFromFlags() (*config.Config, error) {
 
 	return &config.Config{
 		Devices: []config.Device{
-			config.Device{
+			{
 				Name:     *device,
 				Address:  *address,
 				User:     *user,
@@ -178,7 +183,7 @@ func createMetricsHandler() (http.Handler, error) {
 	promhttp.Handler()
 
 	registry := prometheus.NewRegistry()
-	err = registry.Register(prometheus.NewGoCollector())
+	err = registry.Register(collectors.NewGoCollector())
 	if err != nil {
 		return nil, err
 	}
@@ -255,7 +260,6 @@ func collectorOptions() []collector.Option {
 
 	if *withMonitor || cfg.Features.Monitor {
 		opts = append(opts, collector.Monitor())
-
 	}
 
 	if *withIpsec || cfg.Features.Ipsec {

@@ -2,7 +2,7 @@ package config
 
 import (
 	"bytes"
-	"io/ioutil"
+	"os"
 	"testing"
 )
 
@@ -34,7 +34,7 @@ func TestShouldParse(t *testing.T) {
 }
 
 func loadTestFile(t *testing.T) []byte {
-	b, err := ioutil.ReadFile("config.test.yml")
+	b, err := os.ReadFile("config.test.yml")
 	if err != nil {
 		t.Fatalf("could not load config: %v", err)
 	}
