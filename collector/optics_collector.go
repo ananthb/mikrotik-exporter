@@ -47,7 +47,7 @@ func (c *opticsCollector) describe(ch chan<- *prometheus.Desc) {
 }
 
 func (c *opticsCollector) collect(ctx *collectorContext) error {
-	reply, err := ctx.client.Run("/interface/ethernet/print", "=.proplist=name")
+	reply, err := ctx.client.Run("/interface/ethernet/print", "=detail=", "=.proplist=name,sfp-rate-select")
 	if err != nil {
 		log.WithFields(log.Fields{
 			"device": ctx.device.Name,
@@ -58,10 +58,8 @@ func (c *opticsCollector) collect(ctx *collectorContext) error {
 
 	ifaces := make([]string, 0)
 	for _, iface := range reply.Re {
-		n := iface.Map["name"]
-		if strings.HasPrefix(n, "sfp") {
-			ifaces = append(ifaces, n)
-		}
+		if iface.Map["sfp-rate-select"] != "" {
++                       ifaces = append(ifaces, iface.Map["name"])
 	}
 
 	if len(ifaces) == 0 {
