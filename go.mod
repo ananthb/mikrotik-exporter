@@ -1,11 +1,10 @@
 module mikrotik-exporter
 
-go 1.22.4
+go 1.23.2
 
 require (
 	github.com/miekg/dns v1.1.61
 	github.com/prometheus/client_golang v1.19.1
-	github.com/prometheus/common v0.54.0
 	github.com/sirupsen/logrus v1.9.3
 	github.com/stretchr/testify v1.8.2
 	gopkg.in/routeros.v2 v2.0.0-20190905230420-1bbf141cdd91
@@ -19,6 +18,7 @@ require (
 	github.com/kr/text v0.2.0 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/prometheus/client_model v0.6.1 // indirect
+	github.com/prometheus/common v0.54.0 // indirect
 	github.com/prometheus/procfs v0.15.1 // indirect
 	golang.org/x/mod v0.18.0 // indirect
 	golang.org/x/net v0.26.0 // indirect

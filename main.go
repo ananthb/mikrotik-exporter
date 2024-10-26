@@ -1,21 +1,16 @@
-// Run `go generate` to update the version string.
-//go:generate sh -c "printf 'package main\n\nconst appVersion = \"%s\"\n' $VERSION > version.go"
-
 package main
 
 import (
-	"bytes"
 	"flag"
 	"fmt"
 	"mikrotik-exporter/collector"
 	"mikrotik-exporter/config"
 	"net/http"
 	"os"
-	"runtime/debug"
 
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/collectors"
-	"github.com/prometheus/client_golang/prometheus/collectors/version"
+	versioncollector "github.com/prometheus/client_golang/prometheus/collectors/version"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	log "github.com/sirupsen/logrus"
 )
@@ -67,26 +62,18 @@ var (
 
 	cfg *config.Config
 
-	vcsRevision = "0xDEADBEEF"
+	version string
 )
 
 func init() {
-	bi, ok := debug.ReadBuildInfo()
-	if ok {
-		for _, s := range bi.Settings {
-			if s.Key == "vcs.revision" {
-				vcsRevision = s.Value
-			}
-		}
-	}
-	prometheus.MustRegister(version.NewCollector("mikrotik_exporter"))
+	prometheus.MustRegister(versioncollector.NewCollector("mikrotik_exporter"))
 }
 
 func main() {
 	flag.Parse()
 
 	if *ver {
-		fmt.Printf("Version: %s\nSHA: %s\n", appVersion, vcsRevision)
+		fmt.Printf("Version: %s\n", version)
 		os.Exit(0)
 	}
 
@@ -131,7 +118,7 @@ func loadConfigFromFile() (*config.Config, error) {
 		return nil, err
 	}
 
-	return config.Load(bytes.NewReader(b))
+	return config.Load(b)
 }
 
 func loadConfigFromFlags() (*config.Config, error) {
