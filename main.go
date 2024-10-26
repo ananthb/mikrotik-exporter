@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"flag"
 	"fmt"
 	"mikrotik-exporter/collector"
@@ -86,7 +87,15 @@ func main() {
 	}
 	cfg = c
 
-	startServer()
+	srv, err := newServer()
+	if err != nil {
+		log.WithError(err).Fatal("Could not create server")
+	}
+
+	log.Infof("Starting server on %s", *port)
+	if err := srv.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
+		log.WithError(err).Fatal("Failed to start server")
+	}
 }
 
 func configureLog() {
@@ -146,18 +155,21 @@ func loadConfigFromFlags() (*config.Config, error) {
 	}, nil
 }
 
-func startServer() {
-	h, err := createMetricsHandler()
+func newServer() (*http.Server, error) {
+	metricsHandler, err := createMetricsHandler()
 	if err != nil {
-		log.Fatal(err)
+		return nil, err
 	}
-	http.Handle(*metricsPath, h)
 
-	http.HandleFunc("/healthz", func(w http.ResponseWriter, r *http.Request) {
+	mux := http.NewServeMux()
+
+	mux.Handle(*metricsPath, metricsHandler)
+
+	mux.HandleFunc("/healthz", func(w http.ResponseWriter, r *http.Request) {
 		_, _ = w.Write([]byte("ok"))
 	})
 
-	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		_, _ = w.Write([]byte(`<html>
 			<head><title>Mikrotik Exporter</title></head>
 			<body>
@@ -167,8 +179,10 @@ func startServer() {
 			</html>`))
 	})
 
-	log.Info("Listening on ", *port)
-	log.Fatal(http.ListenAndServe(*port, nil))
+	return &http.Server{
+		Addr:    *port,
+		Handler: mux,
+	}, nil
 }
 
 func createMetricsHandler() (http.Handler, error) {
@@ -181,12 +195,10 @@ func createMetricsHandler() (http.Handler, error) {
 	promhttp.Handler()
 
 	registry := prometheus.NewRegistry()
-	err = registry.Register(collectors.NewGoCollector())
-	if err != nil {
+	if err := registry.Register(collectors.NewGoCollector()); err != nil {
 		return nil, err
 	}
-	err = registry.Register(nc)
-	if err != nil {
+	if err := registry.Register(nc); err != nil {
 		return nil, err
 	}
 
